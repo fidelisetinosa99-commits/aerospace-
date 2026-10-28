@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIDELIS AEROSPACE V3</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Arial;background:#020617;color:#fff}
+.head{background:linear-gradient(90deg,#020617,#0f172a);padding:14px;text-align:center;border-bottom:3px solid #38bdf8}
+.head h1{margin:0;color:#38bdf8;letter-spacing:1px}
+.head span{color:#facc15}
+.head p{margin:4px 0 0;color:#94a3b8;font-size:11px}
+.tabs{display:flex;gap:6px;padding:10px;background:#0f172a;justify-content:center;flex-wrap:wrap;position:sticky;top:0;z-index:999}
+.tabs button{border:0;border-radius:999px;padding:9px 14px;font-weight:800;font-size:12px;cursor:pointer}
+.b-all{background:#38bdf8;color:#000}
+.b-net{background:#22c55e;color:#fff}
+.b-light{background:#facc15;color:#000}
+.b-sat{background:#a78bfa;color:#fff}
+.b-add{background:#fff;color:#000}
+#map{height:55vh;width:100%}
+#panel{height:31vh;background:#0f172a;display:flex;flex-direction:column;border-top:2px solid #1e293b}
+#panelHead{padding:8px 12px;background:#020617;display:flex;justify-content:space-between;align-items:center}
+#panelHead b{font-size:13px}
+#panelHead small{color:#22c55e}
+#msgs{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
+.msg{background:#1e293b;padding:8px 11px;border-radius:14px;font-size:13px;max-width:85%}
+.msg.me{background:#38bdf8;color:#000;align-self:flex-end}
+.msg b{color:#facc15}
+.msg.me b{color:#000}
+.inputRow{display:flex;gap:6px;padding:8px;background:#020617}
+.inputRow input{border:0;border-radius:999px;padding:10px 12px;outline:none;font-size:12px}
+#who{width:90px;background:#1e293b;color:#fff}
+#txt{flex:1;background:#fff;color:#000}
+.inputRow button{background:#38bdf8;border:0;border-radius:999px;padding:10px 16px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="head">
+<h1>🚀 FIDELIS <span>AEROSPACE V3</span></h1>
+<p>Agbor Light Map • Network Map • Live Community Chat • Built by Fidelis Etinosa</p>
+</div>
+<div class="tabs">
+<button class="b-all" onclick="showAll()">ALL AREAS</button>
+<button class="b-net" onclick="filter('network')">📶 NETWORK</button>
+<button class="b-light" onclick="filter('light')">💡 LIGHT</button>
+<button class="b-sat" onclick="toggleSat()">🛰️ SATELLITE</button>
+<button class="b-add" onclick="enableAdd()">+ TAP TO ADD</button>
+</div>
+<div id="map"></div>
+<div id="panel">
+<div id="panelHead"><b>💬 LIVE AGBOR FEED</b><small>● LIVE</small></div>
+<div id="msgs"></div>
+<div class="inputRow">
+<input id="who" placeholder="Street">
+<input id="txt" placeholder="e.g Light ON for Boji-Boji">
+<button onclick="send()">Send</button>
+</div>
+</div>
+<script>
+let map=L.map('map').setView([6.2523,6.1926],14);
+let street=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+let sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+let isSat=false;
+function toggleSat(){if(!isSat){map.removeLayer(street);sat.addTo(map);isSat=true}else{map.removeLayer(sat);street.addTo(map);isSat=false}}
+
+let all=[], nets=[], lights=[];
+function addDot(lat,lng,kind,street,info,color){
+ let dot=L.circleMarker([lat,lng],{radius:12,color:color,fillColor:color,fillOpacity:0.9,weight:2}).addTo(map);
+ dot.bindPopup(`<div style="color:#000"><b>${kind.toUpperCase()}</b><br>${info}<br><small>${street} • ${new Date().toLocaleTimeString()}</small></div>`);
+ dot.kind=kind; all.push(dot); if(kind==='network')nets.push(dot); else lights.push(dot);
+ return dot;
+}
+addDot(6.2523,6.1926,'network','Boji-Boji Owa','MTN 4G Full - 25Mbps','#22c55e');
+addDot(6.255,6.195,'light','Uromi Junction','LIGHT ON 🔥 since 11am','#facc15');
+addDot(6.248,6.188,'network','Old Agbor Rd','GLO Weak - No Internet','#ef4444');
+addDot(6.26,6.20,'light','College Road','No Light for 2 days','#64748b');
+addDot(6.251,6.189,'light','Boji-Boji Market','Light just blink!','#facc15');
+addDot(6.2535,6.198,'network','Baleke Street','Airtel 4G Strong','#22c55e');
+
+function filter(k){all.forEach(m=>map.removeLayer(m)); (k==='network'?nets:lights).forEach(m=>m.addTo(map));}
+function showAll(){all.forEach(m=>m.addTo(map));}
+let addMode=false;
+function enableAdd(){addMode=true;alert("ADD MODE ON! Now TAP anywhere on the map to add your light/network report!");}
+
+map.on('click', e=>{
+ if(!addMode) return;
+ let s=prompt("Street name?")||"My Street";
+ let k=prompt("Type: network or light?","light")||"light";
+ let i=prompt("Wetin happen? e.g Light ON, MTN 4G bad")||"Report";
+ let col=k==='network'?'#22c55e':'#facc15';
+ addDot(e.latlng.lat,e.latlng.lng,k,s,i,col);
+ addMode=false;
+ pushChat(s, `[${k.toUpperCase()}] ${i} @ ${s}`);
+});
+
+let store=JSON.parse(localStorage.getItem('fid_v3')||'[]');
+let box=document.getElementById('msgs');
+function pushChat(w,t){store.push({w:w,t:t}); if(store.length>50)store.shift(); localStorage.setItem('fid_v3',JSON.stringify(store)); render();}
+function render(){box.innerHTML=''; store.slice(-25).forEach(m=>{let cls=m.w==='Me'?'msg me':'msg'; box.innerHTML+=`<div class="${cls}"><b>${m.w}:</b> ${m.t}</div>`}); box.scrollTop=box.scrollHeight;}
+function send(){
+ let w=document.getElementById('who').value||'Me';
+ let t=document.getElementById('txt').value.trim();
+ if(!t) return;
+ pushChat(w,t);
+ document.getElementById('txt').value='';
+ if(t.toLowerCase().includes('light')){
+   let lat=6.252+(Math.random()-0.5)/70, lng=6.192+(Math.random()-0.5)/70;
+   addDot(lat,lng,'light',w,t,'#facc15');
+ } else if(t.toLowerCase().includes('mtn')||t.toLowerCase().includes('glo')||t.toLowerCase().includes('network')){
+   let lat=6.252+(Math.random()-0.5)/70, lng=6.192+(Math.random()-0.5)/70;
+   addDot(lat,lng,'network',w,t,'#22c55e');
+ }
+}
+document.getElementById('txt').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+if(store.length===0){
+ pushChat('Fidelis CEO','Welcome to V3! This na Agbor official Light + Network map. Chat and e go show for map automatic!');
+ pushChat('Emeka','Light don come for Uromi Junction since morning!');
+ pushChat('Grace','Airtel strong for Baleke!');
+} else render();
+</script>
+</body>
+</html>
