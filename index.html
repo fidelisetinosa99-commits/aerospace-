@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIDELIS AEROSPACE</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
+.top{background:#020617;padding:12px;text-align:center;border-bottom:2px solid #38bdf8}
+.top h1{margin:0;color:#38bdf8;font-size:19px}
+.top p{margin:3px 0 0;color:#94a3b8;font-size:11px}
+.bar{display:flex;gap:6px;justify-content:center;padding:9px;background:#1e293b;flex-wrap:wrap}
+.bar button{padding:8px 13px;border-radius:20px;border:0;font-weight:bold;font-size:12px}
+#map{height:52vh}
+#chat{height:34vh;background:#1e293b;display:flex;flex-direction:column}
+#chat h3{margin:0;padding:8px;background:#020617;font-size:13px}
+#msgs{flex:1;overflow:auto;padding:8px}
+.m{background:#334155;margin:5px 0;padding:7px 10px;border-radius:10px;font-size:13px}
+.m b{color:#38bdf8}
+.inp{display:flex;gap:5px;padding:6px;background:#020617}
+.inp input{flex:1;padding:8px;border-radius:20px;border:0;font-size:12px}
+.inp button{background:#38bdf8;border-radius:20px;padding:8px 14px;border:0;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="top">
+<h1>🚀 AGBOR AEROSPACE</h1>
+<p>Fidelis Etinosa • fidelisetinosa99@gmail.com • Agbor</p>
+<p>Network Map + Light Map + Live Chat</p>
+</div>
+<div class="bar">
+<button style="background:#38bdf8" onclick="all()">ALL</button>
+<button style="background:#22c55e;color:#fff" onclick="only('network')">📶 NETWORK</button>
+<button style="background:#eab308" onclick="only('light')">💡 LIGHT</button>
+<button style="background:#fff" onclick="add()">+ ADD MY STREET</button>
+</div>
+<div id="map"></div>
+<div id="chat">
+<h3>💬 LIVE CHAT - Where Light / Network Dey?</h3>
+<div id="msgs"></div>
+<div class="inp">
+<input id="who" placeholder="Your Street">
+<input id="txt" placeholder="Type: Light don come for...">
+<button onclick="send()">Send</button>
+</div>
+</div>
+<script>
+var map=L.map('map').setView([6.2523,6.1926],14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+var allM=[],net=[],light=[];
+function mk(lat,lng,kind,street,info,col){
+ var c=L.circleMarker([lat,lng],{radius:11,color:col,fillColor:col,fillOpacity:.85}).addTo(map);
+ c.bindPopup("<b>"+kind+"</b><br>"+info+"<br><small>"+street+"</small>");
+ c.kind=kind; allM.push(c); if(kind=='network')net.push(c); else light.push(c);
+}
+mk(6.2523,6.1926,'network','Boji-Boji','MTN 4G Strong','#22c55e');
+mk(6.255,6.195,'light','Uromi Junc','LIGHT ON NOW','#eab308');
+mk(6.248,6.188,'network','Old Agbor','GLO Poor','#ef4444');
+mk(6.26,6.20,'light','College Rd','No Light','#64748b');
+mk(6.251,6.189,'light','Boji-Boji Main','Light just come!','#eab308');
+function only(t){allM.forEach(m=>map.removeLayer(m));(t=='network'?net:light).forEach(m=>m.addTo(map));}
+function all(){allM.forEach(m=>m.addTo(map));}
+function add(){var s=prompt("Street name?");if(!s)return;var k=prompt("network or light?","light");var i=prompt("Info? e.g Light ON, MTN strong");if(!i)return;alert("Now TAP the map where your street dey!");map.once('click',e=>{mk(e.latlng.lat,e.latlng.lng,k,s,i,k=='network'?'#22c55e':'#eab308');});}
+var data=JSON.parse(localStorage.getItem('fid')||'[]');var box=document.getElementById('msgs');
+function draw(){box.innerHTML='';data.slice(-30).forEach(d=>{box.innerHTML+='<div class=m><b>'+d.w+':</b> '+d.t+'</div>'});box.scrollTop=box.scrollHeight;}
+function send(){var w=document.getElementById('who').value||'Anon';var t=document.getElementById('txt').value;if(!t)return;data.push({w:w,t:t});localStorage.setItem('fid',JSON.stringify(data));document.getElementById('txt').value='';draw();if(t.toLowerCase().includes('light')){mk(6.252+(Math.random()-0.5)/80,6.192+(Math.random()-0.5)/80,'light',w,t,'#eab308');}}
+draw();if(data.length==0){data=[{w:'Fidelis CEO',t:'Welcome! Tell us where light dey for Agbor now!'},{w:'Emeka',t:'Light don come for Uromi Junction!'},{w:'Grace',t:'MTN bad for College Road'}];localStorage.setItem('fid',JSON.stringify(data));draw();}
+</script>
+</body>
+</html>
