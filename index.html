@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FIDELIS V4 ⚡</title>
+<style>
+body{background:#0B1120;color:white;font-family:Arial;margin:0}
+header{padding:15px;display:flex;justify-content:space-between;background:#0B1120;border-bottom:1px solid #1E293B}
+.tabs{display:flex;justify-content:space-around;border-bottom:2px solid #1E293B}
+.tab{padding:14px;cursor:pointer;color:#64748B} .tab.active{color:#2ECC8A;border-bottom:3px solid #2ECC8A}
+.box{background:#151E32;margin:15px;padding:15px;border-radius:16px;border:1px solid #1E293B}
+input{width:100%;padding:14px;border-radius:12px;border:1px solid #334155;background:#0B1120;color:white;box-sizing:border-box}
+.btn{background:#2ECC8A;color:black;padding:12px 20px;border-radius:12px;border:none;font-weight:bold;margin-top:10px;cursor:pointer}
+.chat-bubble{background:#1A2942;padding:10px 14px;border-radius:16px;margin:10px;max-width:80%;border-left:3px solid #2ECC8A}
+#map{height:400px;background:#0B1120;display:flex;align-items:center;justify-content:center;border:2px dashed #334155;border-radius:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<header><div><b style="color:#2ECC8A;font-size:20px">FIDELIS V4 ⚡</b><br><small>Chat · Videos · Map</small></div><div>👑</div></header>
+
+<div class="tabs">
+<div class="tab" onclick="showTab('chat')">💬 Chat</div>
+<div class="tab active" onclick="showTab('videos')">▶ Videos</div>
+<div class="tab" onclick="showTab('map')">🗺️ Map</div>
+</div>
+
+<!-- VIDEOS TAB -->
+<div id="videos" class="section">
+  <div class="box">
+    <h2>TikTok Link Importer</h2>
+    <p style="color:#94A3B8">Paste TikTok link to create chat video. Now e go enter Chat like WhatsApp!</p>
+    <input id="tiktokUrl" placeholder="Paste TikTok URL here">
+    <button class="btn" onclick="importToChat()">Preview link → Send to Chat 🚀</button>
+  </div>
+  <div class="box"><b>How to share a video</b><br><small style="color:#94A3B8">Preview the link, then e go auto-enter your chat. Friends go see am like WhatsApp video. And Map go add pin for Agbor!</small></div>
+</div>
+
+<!-- CHAT TAB -->
+<div id="chat" class="section" style="display:none">
+  <div class="box" id="chatBox"><h3>WhatsApp Chats</h3><p style="color:#64748B">Your imported videos go appear here...</p></div>
+</div>
+
+<!-- MAP TAB -->
+<div id="mapTab" class="section" style="display:none">
+  <div class="box">
+    <h3>Satellite - Agbor</h3>
+    <div id="map">🛰️ Map Loading...<br><span id="nodes">0 Active Nodes</span></div>
+    <div id="mapList"></div>
+  </div>
+</div>
+
+<script>
+let chats = JSON.parse(localStorage.getItem('fidelis_chats')||'[]');
+let count = chats.length;
+
+function showTab(name){
+  document.querySelectorAll('.section').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(name=='map'?'mapTab':name).style.display='block';
+  event.target.classList.add('active');
+  if(name=='chat') renderChat();
+  if(name=='map') renderMap();
+}
+
+function importToChat(){
+  let url = document.getElementById('tiktokUrl').value;
+  if(!url.includes('tiktok.com')){ alert('Paste valid TikTok link'); return; }
+  
+  // Create WhatsApp style message
+  let newChat = {
+    url: url,
+    title: 'TikTok Video '+(count+1),
+    time: new Date().toLocaleTimeString(),
+    loc: 'Agbor, Delta State'
+  };
+  chats.unshift(newChat);
+  localStorage.setItem('fidelis_chats', JSON.stringify(chats));
+  count++;
+  
+  // Go to chat
+  document.getElementById('tiktokUrl').value='';
+  alert('✅ Imported! E don enter Chat + Map!');
+  showTab('chat');
+  // Hack to activate chat tab UI
+  document.querySelectorAll('.tab')[0].classList.add('active');
+}
+
+function renderChat(){
+  let box = document.getElementById('chatBox');
+  if(chats.length==0){ box.innerHTML='<h3>WhatsApp Chats</h3><p>No videos yet</p>'; return; }
+  let html='<h3>WhatsApp Chats ('+chats.length+')</h3>';
+  chats.forEach(c=>{
+    html+=`<div class="chat-bubble"><b>🎬 ${c.title}</b><br><a href="${c.url}" target="_blank" style="color:#2ECC8A">${c.url}</a><br><small>${c.loc} • ${c.time}</small><br><button class="btn" style="padding:6px 10px;margin-top:5px" onclick="window.open('${c.url}')">▶ Play on TikTok</button></div>`;
+  });
+  box.innerHTML=html;
+}
+
+function renderMap(){
+  document.getElementById('nodes').innerText = chats.length+' Active Nodes • Agbor';
+  let list = document.getElementById('mapList');
+  let html='<h4>📍 Video Locations</h4>';
+  chats.forEach((c,i)=>{
+    html+=`<div class="chat-bubble">📌 Pin ${i+1}: ${c.title} - Agbor (6.25${i}, 6.19${i})</div>`;
+  });
+  list.innerHTML=html;
+}
+
+// Auto load
+renderChat();
+</script>
+</body>
+</html>
