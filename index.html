@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIDELIS AEROSPACE - Agbor</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body{margin:0;font-family:Arial;background:#0f172a;color:white}
+header{background:#020617;padding:12px;text-align:center;border-bottom:2px solid #38bdf8}
+header h1{margin:0;font-size:18px;color:#38bdf8}
+header p{margin:2px;font-size:12px;color:#94a3b8}
+#controls{display:flex;justify-content:center;gap:8px;padding:10px;background:#1e293b;flex-wrap:wrap}
+button{padding:8px 14px;border:none;border-radius:20px;font-weight:bold;cursor:pointer}
+.btn-net{background:#22c55e;color:white}
+.btn-light{background:#eab308;color:black}
+.btn-all{background:#38bdf8;color:black}
+#map{height:55vh;width:100%}
+#chatBox{background:#1e293b;height:30vh;display:flex;flex-direction:column}
+#chatHead{padding:8px;background:#020617;font-weight:bold;display:flex;justify-content:space-between}
+#messages{flex:1;overflow-y:auto;padding:8px;font-size:13px}
+.msg{background:#334155;margin:4px 0;padding:6px 10px;border-radius:10px}
+.msg b{color:#38bdf8}
+#chatInput{display:flex;padding:6px;gap:6px;background:#020617}
+#chatInput input{flex:1;padding:8px;border-radius:20px;border:none;outline:none}
+#chatInput button{background:#38bdf8;padding:8px 14px;border-radius:20px}
+.street{font-size:11px;color:#fbbf24}
+</style>
+</head>
+<body>
+<header>
+<h1>🚀 FIDELIS AEROSPACE</h1>
+<p>Built by Fidelis, 13 - Solving Network & Power for Agbor</p>
+</header>
+
+<div id="controls">
+<button class="btn-all" onclick="showAll()">SHOW ALL</button>
+<button class="btn-net" onclick="showOnly('network')">📶 NETWORK</button>
+<button class="btn-light" onclick="showOnly('light')">💡 LIGHT</button>
+<button style="background:#fff" onclick="addMyArea()">+ ADD MY STREET</button>
+</div>
+
+<div id="map"></div>
+
+<div id="chatBox">
+<div id="chatHead"><span>💬 LIVE CHAT - Agbor Updates</span><span style="font-size:10px">Online: <span id="online">12+</span></span></div>
+<div id="messages"></div>
+<div id="chatInput">
+<input id="userName" placeholder="Your street (e.g. Boji-Boji)" style="max-width:100px">
+<input id="msgInput" placeholder="Type: Light don come / Network bad...">
+<button onclick="sendMsg()">Send</button>
+</div>
+</div>
+
+<script>
+// MAP - Center Agbor
+var map = L.map('map').setView([6.2523, 6.1926], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+var allMarkers = [];
+var netMarkers = [];
+var lightMarkers = [];
+
+function addMarker(lat,lng,type,street,info,color){
+  var m = L.circleMarker([lat,lng],{radius:10,color:color,fillColor:color,fillOpacity:0.8}).addTo(map);
+  m.bindPopup(`<b>${type.toUpperCase()}</b><br>${info}<br><span class="street">${street}</span>`);
+  m._type = type;
+  allMarkers.push(m);
+  if(type=='network') netMarkers.push(m); else lightMarkers.push(m);
+}
+
+// DEMO DATA - Agbor streets
+addMarker(6.2523,6.1926,'network','Boji-Boji','MTN Strong - 4G','#22c55e');
+addMarker(6.255,6.195,'light','Uromi Junction','LIGHT ON now!','#eab308');
+addMarker(6.248,6.188,'network','Old Agbor','GLO Bad','#ef4444');
+addMarker(6.26,6.20,'light','College Road','No Light','#64748b');
+
+function showOnly(type){
+  allMarkers.forEach(m=>map.removeLayer(m));
+  var show = type=='network'? netMarkers : lightMarkers;
+  show.forEach(m=>m.addTo(map));
+}
+function showAll(){ allMarkers.forEach(m=>m.addTo(map)); }
+
+function addMyArea(){
+  var st = prompt("Your street name for Agbor?");
+  if(!st) return;
+  var t = prompt("Type: network or light?","light");
+  var info = prompt("Wetin dey happen there? (e.g. Light on, MTN strong)");
+  if(!info) return;
+  map.once('click',function(e){
+    var color = t=='network'?'#22c55e':'#eab308';
+    addMarker(e.latlng.lat,e.latlng.lng,t,st,info,color);
+    saveData();
+  });
+  alert("Now TAP for map where your street dey!");
+}
+
+// CHAT - Simple but works for whole Agbor (saved for phone)
+var msgs = JSON.parse(localStorage.getItem('fid_chat')||'[]');
+var box = document.getElementById('messages');
+function renderChat(){
+  box.innerHTML='';
+  msgs.slice(-20).forEach(m=>{
+    box.innerHTML+=`<div class="msg"><b>${m.name} (${m.street}):</b> ${m.text}</div>`;
+  });
+  box.scrollTop = box.scrollHeight;
+}
+function sendMsg(){
+  var name = document.getElementById('userName').value || 'Anon';
+  var text = document.getElementById('msgInput').value;
+  if(!text) return;
+  msgs.push({name:name,street:name,text:text,time:Date.now()});
+  localStorage.setItem('fid_chat',JSON.stringify(msgs));
+  document.getElementById('msgInput').value='';
+  renderChat();
+  // Auto add to map if message talks about light/network
+  if(text.toLowerCase().includes('light')){
+    addMarker(6.252+ (Math.random()-0.5)/100, 6.192+ (Math.random()-0.5)/100,'light',name,text,'#eab308');
+  }
+}
+renderChat();
+// Add some starter chat
+if(msgs.length==0){
+  msgs.push({name:'Fidelis CEO',street:'HQ',text:'Welcome to Fidelis Aerospace! Report light & network here!'});
+  msgs.push({name:'Emeka',street:'Boji-Boji',text:'Light don come for my side now o!'});
+  renderChat();
+}
+function saveData(){ /* for future firebase */ }
+
+if('serviceWorker' in navigator){ /* PWA ready */ }
+</script>
+</body>
+</html>
